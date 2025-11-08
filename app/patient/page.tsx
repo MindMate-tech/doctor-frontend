@@ -15,7 +15,7 @@ export default function PatientPage() {
         <div className="flex flex-col items-center gap-4">
           <div className="w-8 h-8 border-4 border-slate-600 border-t-blue-500 rounded-full animate-spin" />
           <div className="text-slate-300 text-lg">No patient loaded</div>
-          <Link href="/" className="text-sm text-blue-400 hover:text-blue-300 hover:underline">
+          <Link href="/dashboard" className="text-sm text-blue-400 hover:text-blue-300 hover:underline">
             Return to Dashboard
           </Link>
         </div>

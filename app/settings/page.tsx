@@ -9,7 +9,7 @@ export default function SettingsPage() {
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-4xl">
         <div className="flex items-center gap-4 mb-6">
           <Link
-            href="/"
+            href="/dashboard"
             className="text-sm text-blue-400 hover:text-blue-300 hover:underline transition-colors"
           >
             ← Back to Dashboard
