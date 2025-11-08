@@ -65,24 +65,25 @@ export default function TopBar({ sidebarOpen, onToggleSidebar }: TopBarProps) {
         <div className={`flex items-center gap-3 transition-all duration-300 ${shrunk ? 'w-full' : ''}`}>
           {/* Hamburger - always visible and accessible */}
           <button
+            type="button"
             aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
             onClick={onToggleSidebar}
-            className="p-2 rounded-md text-slate-200 hover:bg-slate-800/60 focus:outline-none focus:ring-2 focus:ring-slate-500"
+            className="p-2 rounded-lg text-slate-200 hover:bg-slate-800/60 active:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-slate-100">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-slate-100 transition-transform hover:scale-110">
               <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
 
-          <div className={`rounded-md overflow-hidden transition-all duration-300 ${shrunk ? 'w-10 h-10' : 'w-14 h-14'}`}>
+          <div className={`rounded-lg overflow-hidden shadow-md transition-all duration-300 ${shrunk ? 'w-10 h-10' : 'w-14 h-14'}`}>
             <Image src="/logo-mindmate.png" alt="MindMate" width={56} height={56} className="object-cover" loading="eager" style={{ width: 'auto', height: 'auto' }} />
           </div>
 
           {/* Title is visible only when not shrunk */}
           {!shrunk && (
-            <div className="transition-all duration-300 overflow-hidden"> 
-              <div className="text-lg font-semibold text-white leading-tight">MindMate.tech</div>
-              <div className="text-xs text-slate-300">Cognitive Health Monitor</div>
+            <div className="transition-all duration-300 animate-in fade-in slide-in-from-left-2">
+              <div className="text-lg font-bold text-white leading-tight">MindMate.tech</div>
+              <div className="text-xs text-slate-400">Cognitive Health Monitor</div>
             </div>
           )}
         </div>

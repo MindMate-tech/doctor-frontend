@@ -30,10 +30,10 @@ export function PointCloudBrainModel({ regionScores }: PointCloudBrainModelProps
     'Object_1': { key: 'prefrontalCortex', label: 'Prefrontal Cortex' },
     'Object_2': { key: 'prefrontalCortex', label: 'Prefrontal Cortex' },
     
-    // Temporal lobes (sides)
-    'Object_3': { key: 'temporalLobe', label: 'Temporal Lobe' },
-    'Object_4': { key: 'temporalLobe', label: 'Temporal Lobe' },
-    'Object_5': { key: 'temporalLobe', label: 'Temporal Lobe' },
+    // Temporal lobes (sides) - mapped to parietal lobe
+    'Object_3': { key: 'parietalLobe', label: 'Parietal Lobe' },
+    'Object_4': { key: 'parietalLobe', label: 'Parietal Lobe' },
+    'Object_5': { key: 'parietalLobe', label: 'Parietal Lobe' },
     
     // Parietal lobe (top)
     'Object_6': { key: 'parietalLobe', label: 'Parietal Lobe' },

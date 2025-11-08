@@ -116,13 +116,14 @@ function generateRecentSessions(condition: 'healthy' | 'mild' | 'moderate' | 'se
         
         sessions.push({
             date: date.toISOString(),
+            timestamp: date.toISOString(),
             score,
             exerciseType,
             notableEvents
         });
     }
 
-    return sessions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return sessions.sort((a, b) => new Date(b.timestamp ?? b.date ?? 0).getTime() - new Date(a.timestamp ?? a.date ?? 0).getTime());
 }
 
 export function generateMockPatient(patientId: string, condition: 'healthy' | 'mild' | 'moderate' | 'severe'): PatientData {

@@ -1,6 +1,5 @@
 "use client"
 
-import React from 'react'
 import type { PatientData } from '@/types/patient'
 import { getRecentSessions } from '@/store/selectors'
 
@@ -47,29 +46,32 @@ export default function MetricsList({ patient }: Props) {
   ]
 
   return (
-    <div className="mb-6">
-      <h2 className="text-sm text-slate-300 mb-2">Key Metrics</h2>
-      <ul className="space-y-2">
+    <div className="mb-8">
+      <h2 className="text-lg font-semibold text-white mb-4">Key Metrics</h2>
+      <ul className="space-y-3">
         {items.map((it) => {
           const delta = it.baseline ? ((it.value - it.baseline) / (it.baseline || 1)) * 100 : null
           const arrow = delta === null ? '—' : delta > 0 ? '▲' : delta < 0 ? '▼' : '—'
           const badgeClass = scoreToBadgeClass(it.value)
 
           return (
-            <li key={it.id} className="flex items-center justify-between gap-4 bg-slate-900 border border-slate-800 rounded-md p-3">
-              <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-sm border border-slate-700 ${badgeClass}`} aria-hidden />
+            <li
+              key={it.id}
+              className="flex items-center justify-between gap-4 bg-slate-900/50 border border-slate-800 rounded-lg p-4 shadow-lg backdrop-blur-sm transition-all hover:bg-slate-900/70 hover:border-slate-700"
+            >
+              <div className="flex items-center gap-4">
+                <div className={`w-3 h-3 rounded-sm shadow-md ${badgeClass}`} aria-hidden />
                 <div>
-                  <div className="text-sm text-slate-300">{it.label}</div>
-                  <div className="text-white font-medium">
+                  <div className="text-sm text-slate-400 mb-0.5">{it.label}</div>
+                  <div className="text-xl font-semibold text-white">
                     {it.percent ? Math.round(it.value * 100) + '%' : String(it.value)}
                   </div>
                 </div>
               </div>
 
               <div className="text-right text-sm">
-                <div className="text-slate-400">Change</div>
-                <div className={`mt-1 ${delta && delta > 0 ? 'text-green-400' : delta && delta < 0 ? 'text-red-400' : 'text-slate-400'}`}>
+                <div className="text-slate-500 text-xs mb-1">Change</div>
+                <div className={`font-medium ${delta && delta > 0 ? 'text-green-400' : delta && delta < 0 ? 'text-red-400' : 'text-slate-400'}`}>
                   <span className="mr-1">{arrow}</span>
                   {delta === null ? 'N/A' : `${delta.toFixed(1)}%`}
                 </div>

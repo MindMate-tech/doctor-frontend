@@ -128,15 +128,11 @@ export function GeneratedPointCloudBrain({
             <bufferGeometry>
               <bufferAttribute
                 attach="attributes-position"
-                count={cloud.positions.length / 3}
-                array={cloud.positions}
-                itemSize={3}
+                args={[cloud.positions, 3]}
               />
               <bufferAttribute
                 attach="attributes-color"
-                count={cloud.colors.length / 3}
-                array={cloud.colors}
-                itemSize={3}
+                args={[cloud.colors, 3]}
               />
             </bufferGeometry>
             <pointsMaterial
