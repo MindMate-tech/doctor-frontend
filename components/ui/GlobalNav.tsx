@@ -1,11 +1,20 @@
 "use client"
 
 import React from 'react'
+import { usePathname } from 'next/navigation'
 import TopBar from './TopBar'
 import SideBar from './SideBar'
 
 export default function GlobalNav({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
+  const pathname = usePathname()
+
+  // Hide navigation on landing page
+  const isLandingPage = pathname === '/'
+
+  if (isLandingPage) {
+    return <>{children}</>
+  }
 
   return (
     <>
