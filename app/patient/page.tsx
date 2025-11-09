@@ -30,7 +30,7 @@ export default function PatientPage() {
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-white mb-1">{patient.patientName}</h1>
-            <p className="text-sm text-slate-400">Interactive 3D brain visualization</p>
+            <p className="text-sm text-slate-400">Brain Segment Condition by Score</p>
           </div>
           <Badge variant="outline" className="text-xs text-slate-300 border-slate-700 w-fit">
             ID: {patient.patientId}
@@ -40,10 +40,7 @@ export default function PatientPage() {
         {/* 3D Visualization Card */}
         <Card className="bg-slate-900/50 border-slate-800 shadow-xl backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="text-xl font-semibold text-white">3D Brain Viewer</CardTitle>
-            <CardDescription className="text-slate-400">
-              High-resolution point cloud with 6,000 particles. Click and drag to rotate, scroll to zoom.
-            </CardDescription>
+            <CardTitle className="text-xl font-semibold text-white">Brain Segment Condition by Score</CardTitle>
           </CardHeader>
           <CardContent>
             <PointCloudCanvas regionScores={patient.brainRegions} pointDensity={6000} />

@@ -11,6 +11,7 @@ import usePatientPolling from '@/hooks/usePatientPolling';
 import MemoryTimelineChart from '@/components/dashboard/MemoryTimelineChart';
 import RecentActivityFeed from '@/components/dashboard/RecentActivityFeed';
 import DeclineAlert from '@/components/dashboard/DeclineAlert';
+import PatientSearch from '@/components/dashboard/PatientSearch';
 import api, { ApiError } from '@/lib/api/client';
 import { transformPatientData, transformPatientListItem } from '@/lib/api/transforms';
 
@@ -149,10 +150,10 @@ export default function Home() {
         {/* Connection Status and Error Banner */}
         <div className="mb-4 flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <Badge 
+            <Badge
               variant={isBackendConnected ? "default" : "secondary"}
-              className={isBackendConnected 
-                ? "bg-green-600 text-white border-green-500" 
+              className={isBackendConnected
+                ? "bg-green-600 text-white border-green-500"
                 : "bg-yellow-600 text-white border-yellow-500"
               }
             >
@@ -165,6 +166,28 @@ export default function Home() {
             </div>
           )}
         </div>
+
+        {/* Patient Search - Positioned high on page */}
+        {isBackendConnected && (
+          <Card className="mb-6 bg-slate-900/50 border-slate-800 shadow-xl backdrop-blur-sm overflow-visible relative z-50">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold text-white">
+                Patient Search
+              </CardTitle>
+              <p className="text-sm text-slate-400 mt-1">
+                Search and select a patient from the database
+              </p>
+            </CardHeader>
+            <CardContent className="overflow-visible">
+              <PatientSearch
+                patients={backendPatients}
+                selectedPatientId={selectedPatientId}
+                onSelectPatient={setSelectedPatientId}
+                isLoading={isLoading}
+              />
+            </CardContent>
+          </Card>
+        )}
 
         {/* Patient Info Header */}
         <Card className="mb-8 bg-slate-900/50 border-slate-800 shadow-xl backdrop-blur-sm">
@@ -232,86 +255,46 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            {/* Controls */}
-            <Card className="bg-slate-900/50 border-slate-800 shadow-lg backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-white">
-                  {isBackendConnected ? "Patient Selector" : "Demo Controls"}
-                </CardTitle>
-                <p className="text-sm text-slate-400 mt-1">
-                  {isBackendConnected 
-                    ? "Select a patient from the backend database"
-                    : "Switch between different patient conditions (mock data)"
-                  }
-                </p>
-              </CardHeader>
-              <CardContent>
-                {isBackendConnected ? (
-                  <>
-                    <label htmlFor="patient-selector" className="block text-sm font-medium mb-3 text-slate-300">
-                      Select Patient
-                    </label>
-                    <select
-                      id="patient-selector"
-                      aria-label="Patient selector"
-                      className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all cursor-pointer"
-                      value={selectedPatientId || ""}
-                      onChange={(e) => {
-                        setSelectedPatientId(e.target.value);
-                      }}
-                      disabled={isLoading || backendPatients.length === 0}
-                    >
-                      {backendPatients.length === 0 ? (
-                        <option value="">No patients available</option>
-                      ) : (
-                        <>
-                          <option value="">Select a patient...</option>
-                          {backendPatients.map((p) => (
-                            <option key={p.id} value={p.id}>
-                              {p.name} ({p.id.slice(0, 8)}...)
-                            </option>
-                          ))}
-                        </>
-                      )}
-                    </select>
-                    {isLoading && (
-                      <div className="mt-2 text-sm text-slate-400">Loading patient data...</div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <label htmlFor="patient-condition" className="block text-sm font-medium mb-3 text-slate-300">
-                      Patient Condition
-                    </label>
-                    <select
-                      id="patient-condition"
-                      aria-label="Patient condition selector"
-                      className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all cursor-pointer"
-                      onChange={(e) => {
-                        const condition = e.target.value as keyof typeof MOCK_PATIENTS;
-                        setPatient(MOCK_PATIENTS[condition]);
-                      }}
-                      defaultValue="moderate"
-                    >
-                      <option value="healthy">Healthy Patient</option>
-                      <option value="mild">Mild Cognitive Decline</option>
-                      <option value="moderate">Moderate Cognitive Decline</option>
-                      <option value="severe">Severe Cognitive Decline</option>
-                    </select>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+            {/* Demo Controls - Only shown when using mock data */}
+            {!isBackendConnected && (
+              <Card className="bg-slate-900/50 border-slate-800 shadow-lg backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg font-semibold text-white">
+                    Demo Controls
+                  </CardTitle>
+                  <p className="text-sm text-slate-400 mt-1">
+                    Switch between different patient conditions (mock data)
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <label htmlFor="patient-condition" className="block text-sm font-medium mb-3 text-slate-300">
+                    Patient Condition
+                  </label>
+                  <select
+                    id="patient-condition"
+                    aria-label="Patient condition selector"
+                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all cursor-pointer"
+                    onChange={(e) => {
+                      const condition = e.target.value as keyof typeof MOCK_PATIENTS;
+                      setPatient(MOCK_PATIENTS[condition]);
+                    }}
+                    defaultValue="moderate"
+                  >
+                    <option value="healthy">Healthy Patient</option>
+                    <option value="mild">Mild Cognitive Decline</option>
+                    <option value="moderate">Moderate Cognitive Decline</option>
+                    <option value="severe">Severe Cognitive Decline</option>
+                  </select>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Right Column - 3D Visualization (Sticky) */}
           <div className="lg:sticky lg:top-24">
             <Card className="bg-slate-900/50 border-slate-800 shadow-xl backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-xl font-semibold text-white">3D Brain Visualization</CardTitle>
-                <p className="text-sm text-slate-400 mt-1">
-                  High-resolution interactive point cloud with 8,000 particles
-                </p>
+                <CardTitle className="text-xl font-semibold text-white">Brain Condition by Score</CardTitle>
               </CardHeader>
               <CardContent>
                 <PointCloudCanvas regionScores={patient.brainRegions} pointDensity={8000} />
