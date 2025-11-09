@@ -1,14 +1,16 @@
 "use client"
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import usePatientStore from '@/store/patientStore'
 import MRIAttacher from '@/components/chat/MRIAttacher'
+import VoiceAnalysisAttacher from '@/components/chat/VoiceAnalysisAttacher'
 import PatientSearch from '@/components/dashboard/PatientSearch'
 import { createClient } from '@supabase/supabase-js'
+import { createAnalysisMessage } from '@/lib/formatAnalysisResults'
 
 type Message = {
   id: string
@@ -37,6 +39,48 @@ export default function ChatPage() {
   const [loadingPatients, setLoadingPatients] = useState(true)
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const scrollerRef = useRef<HTMLDivElement | null>(null)
+
+  // Helper function to calculate age from date of birth
+  const calculateAge = (dob: string | undefined): number | undefined => {
+    if (!dob) return undefined
+    const birthDate = new Date(dob)
+    const today = new Date()
+    let age = today.getFullYear() - birthDate.getFullYear()
+    const monthDiff = today.getMonth() - birthDate.getMonth()
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--
+    }
+    return age
+  }
+
+  // Get selected patient details
+  const selectedPatient = patients.find((p) => p.id === selectedPatientId)
+  const patientAge = selectedPatient ? calculateAge(selectedPatient.dob) : undefined
+  const patientSex = selectedPatient?.gender
+
+  // Handle MRI analysis completion
+  const handleMRIAnalysisComplete = useCallback((result: unknown, fileName: string) => {
+    const analysisMessage = createAnalysisMessage('mri', result, fileName, selectedPatient?.name)
+    const newMessage: Message = {
+      id: `mri-${Date.now()}`,
+      role: 'assistant',
+      text: analysisMessage,
+      toolsUsed: ['MRI Volumetric Analysis']
+    }
+    setMessages((m) => [...m, newMessage])
+  }, [selectedPatient?.name])
+
+  // Handle Voice analysis completion
+  const handleVoiceAnalysisComplete = useCallback((result: unknown, fileName: string) => {
+    const analysisMessage = createAnalysisMessage('voice', result, fileName, selectedPatient?.name)
+    const newMessage: Message = {
+      id: `voice-${Date.now()}`,
+      role: 'assistant',
+      text: analysisMessage,
+      toolsUsed: ['Voice Dementia Detection']
+    }
+    setMessages((m) => [...m, newMessage])
+  }, [selectedPatient?.name])
 
   // Fetch patients from Supabase
   useEffect(() => {
@@ -156,12 +200,12 @@ export default function ChatPage() {
       }
 
       setMessages((m) => [...m, reply])
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error querying doctor API:', error)
       const errorMsg: Message = {
         id: String(Date.now() + 1),
         role: 'assistant',
-        text: `Error: ${error.message || 'Failed to connect to the assistant. Please try again.'}`,
+        text: `Error: ${error instanceof Error ? error.message : 'Failed to connect to the assistant. Please try again.'}`,
       }
       setMessages((m) => [...m, errorMsg])
     } finally {
@@ -207,12 +251,12 @@ export default function ChatPage() {
       }
 
       setMessages((m) => [...m, reply])
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error querying doctor API:', error)
       const errorMsg: Message = {
         id: String(Date.now() + 1),
         role: 'assistant',
-        text: `Error: ${error.message || 'Failed to connect to the assistant. Please try again.'}`,
+        text: `Error: ${error instanceof Error ? error.message : 'Failed to connect to the assistant. Please try again.'}`,
       }
       setMessages((m) => [...m, errorMsg])
     } finally {
@@ -284,17 +328,17 @@ export default function ChatPage() {
                         <div className="text-sm leading-relaxed">
                           <ReactMarkdown
                             components={{
-                              p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                              ul: ({ children }) => <ul className="list-disc pl-4 mb-2 space-y-1">{children}</ul>,
-                              ol: ({ children }) => <ol className="list-decimal pl-4 mb-2 space-y-1">{children}</ol>,
-                              li: ({ children }) => <li className="text-slate-200">{children}</li>,
-                              strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
-                              em: ({ children }) => <em className="italic">{children}</em>,
-                              code: ({ children }) => <code className="bg-slate-900/50 px-1.5 py-0.5 rounded text-blue-300 text-xs font-mono">{children}</code>,
-                              pre: ({ children }) => <pre className="bg-slate-900/50 p-3 rounded-lg mb-2 overflow-x-auto">{children}</pre>,
-                              h1: ({ children }) => <h1 className="text-lg font-bold mb-2 text-white">{children}</h1>,
-                              h2: ({ children }) => <h2 className="text-base font-bold mb-2 text-white">{children}</h2>,
-                              h3: ({ children }) => <h3 className="text-sm font-bold mb-1 text-white">{children}</h3>,
+                              p: ({ children }: { children?: React.ReactNode }) => <p className="mb-2 last:mb-0">{children}</p>,
+                              ul: ({ children }: { children?: React.ReactNode }) => <ul className="list-disc pl-4 mb-2 space-y-1">{children}</ul>,
+                              ol: ({ children }: { children?: React.ReactNode }) => <ol className="list-decimal pl-4 mb-2 space-y-1">{children}</ol>,
+                              li: ({ children }: { children?: React.ReactNode }) => <li className="text-slate-200">{children}</li>,
+                              strong: ({ children }: { children?: React.ReactNode }) => <strong className="font-semibold text-white">{children}</strong>,
+                              em: ({ children }: { children?: React.ReactNode }) => <em className="italic">{children}</em>,
+                              code: ({ children }: { children?: React.ReactNode }) => <code className="bg-slate-900/50 px-1.5 py-0.5 rounded text-blue-300 text-xs font-mono">{children}</code>,
+                              pre: ({ children }: { children?: React.ReactNode }) => <pre className="bg-slate-900/50 p-3 rounded-lg mb-2 overflow-x-auto">{children}</pre>,
+                              h1: ({ children }: { children?: React.ReactNode }) => <h1 className="text-lg font-bold mb-2 text-white">{children}</h1>,
+                              h2: ({ children }: { children?: React.ReactNode }) => <h2 className="text-base font-bold mb-2 text-white">{children}</h2>,
+                              h3: ({ children }: { children?: React.ReactNode }) => <h3 className="text-sm font-bold mb-1 text-white">{children}</h3>,
                             }}
                           >
                             {m.text}
@@ -329,6 +373,14 @@ export default function ChatPage() {
               <MRIAttacher
                 patientId={selectedPatientId}
                 disabledReason={!selectedPatientId ? "Select a patient above to upload MRI files" : undefined}
+                patientAge={patientAge}
+                patientSex={patientSex}
+                onAnalysisComplete={handleMRIAnalysisComplete}
+              />
+              <VoiceAnalysisAttacher
+                patientId={selectedPatientId}
+                disabledReason={!selectedPatientId ? "Select a patient above to upload audio files" : undefined}
+                onAnalysisComplete={handleVoiceAnalysisComplete}
               />
               <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
                 <input

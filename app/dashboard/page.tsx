@@ -5,7 +5,6 @@ import usePatientStore from '@/store/patientStore';
 import { MOCK_PATIENTS } from '@/lib/mockData/patientGenerator';
 import { PointCloudCanvas } from '@/components/brain/PointCloudCanvas';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import MetricsList from '@/components/dashboard/MetricsList';
 import usePatientPolling from '@/hooks/usePatientPolling';
 import MemoryTimelineChart from '@/components/dashboard/MemoryTimelineChart';
@@ -39,7 +38,8 @@ export default function Home() {
       try {
         await api.health();
         if (!mounted) return;
-        
+
+        console.log('✅ [DASHBOARD] Database connected - using real patient data');
         setIsBackendConnected(true);
         setError(null);
 
@@ -47,26 +47,30 @@ export default function Home() {
         try {
           const patients = await api.patients.list();
           if (!mounted) return;
-          
+
           const transformedPatients = patients.map(transformPatientListItem);
           setBackendPatients(transformedPatients);
+          console.log(`📊 [DASHBOARD] Loaded ${transformedPatients.length} patients from database`);
 
           // Auto-select first patient if available and none selected
           if (transformedPatients.length > 0 && !selectedPatientId) {
             setSelectedPatientId(transformedPatients[0].id);
+            console.log(`👤 [DASHBOARD] Auto-selected patient: ${transformedPatients[0].name}`);
           }
         } catch (err) {
           if (!mounted) return;
-          console.error('Failed to fetch patients:', err);
+          console.error('❌ [DASHBOARD] Failed to fetch patients:', err);
           setError('Failed to load patients from backend');
         }
       } catch (err) {
         if (!mounted) return;
-        console.warn('Backend not available, using mock data:', err);
+        console.warn('⚠️ [DASHBOARD] Database not available - falling back to mock data');
+        console.warn('[DASHBOARD] Error:', err);
         setIsBackendConnected(false);
         // Fallback to mock data
         if (!patient) {
           setPatient(MOCK_PATIENTS.moderate);
+          console.log('📝 [DASHBOARD] Using mock patient data (moderate condition)');
         }
       } finally {
         if (mounted) {
@@ -147,25 +151,12 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-slate-950">
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-[1800px]">
-        {/* Connection Status and Error Banner */}
-        <div className="mb-4 flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <Badge
-              variant={isBackendConnected ? "default" : "secondary"}
-              className={isBackendConnected
-                ? "bg-green-600 text-white border-green-500"
-                : "bg-yellow-600 text-white border-yellow-500"
-              }
-            >
-              {isBackendConnected ? "✓ Backend Connected" : "⚠ Using Mock Data"}
-            </Badge>
+        {/* Error Banner (only show if there's an error) */}
+        {error && (
+          <div className="mb-4 bg-red-900/50 border border-red-700 text-red-200 px-4 py-2 rounded-lg text-sm">
+            {error}
           </div>
-          {error && (
-            <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-2 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-        </div>
+        )}
 
         {/* Patient Search - Positioned high on page */}
         {isBackendConnected && (
@@ -195,9 +186,9 @@ export default function Home() {
             <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <span className="text-2xl font-bold text-white">{patient.patientName}</span>
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs text-slate-300 border-slate-700 w-fit">
+                <span className="text-xs text-slate-400 font-mono px-3 py-1 bg-slate-800/50 rounded-md border border-slate-700">
                   ID: {patient.patientId}
-                </Badge>
+                </span>
               </div>
             </CardTitle>
           </CardHeader>

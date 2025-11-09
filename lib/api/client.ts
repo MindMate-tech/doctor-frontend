@@ -137,17 +137,18 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
 const api = {
   /**
-   * Check if backend is available
+   * Check if database and API are available
    */
   async health(): Promise<HealthResponse> {
     try {
-      const response = await fetchWithTimeout(`${AI_API_URL}/health`);
+      // Check database health via Next.js API route (not AI microservice)
+      const response = await fetchWithTimeout(`${API_URL}/health/database`);
       return handleResponse<HealthResponse>(response);
     } catch (error) {
       if (error instanceof ApiError) {
         throw error;
       }
-      throw new ApiError('Failed to connect to backend', 0);
+      throw new ApiError('Failed to connect to database', 0);
     }
   },
 
@@ -191,7 +192,7 @@ const api = {
      */
     async getCognitiveData(patientId: string): Promise<BackendPatientData> {
       const response = await fetchWithTimeout(
-        `${API_URL}/patients/${patientId}/analytics`
+        `${API_URL}/patients/${patientId}/cognitive-data`
       );
       return handleResponse<BackendPatientData>(response);
     },
