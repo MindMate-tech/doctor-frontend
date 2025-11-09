@@ -5,6 +5,8 @@ import { ArrowRight, Activity } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Playfair_Display } from 'next/font/google'
+import TopLightRays from '@/components/effects/TopLightRays'
+import TwinklingStars from '@/components/effects/TwinklingStars'
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -15,30 +17,37 @@ const playfair = Playfair_Display({
 
 export default function HeroSection() {
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      {/* Main Container with rounded corners */}
-      <div
-        className="relative w-full max-w-7xl rounded-[2.5rem] overflow-hidden shadow-2xl animate-fade-in"
-        style={{
-          backgroundImage: 'url(/hero-mindmate.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          minHeight: '85vh',
-        }}
-      >
+    <div
+      className="relative min-h-screen w-full overflow-hidden animate-fade-in"
+      style={{
+        backgroundImage: 'url(/hero-mindmate.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+        {/* Light rays from top */}
+        <TopLightRays
+          enabled={true}
+          intensity={0.9}
+          rayCount={15}
+          rayColor="rgba(255, 255, 255, 0.08)"
+          pulse={true}
+        />
+
+        {/* Twinkling stars */}
+        <TwinklingStars
+          enabled={true}
+          starCount={80}
+          starColor="rgba(255, 255, 255, 0.9)"
+          starSize={2}
+          twinkle={true}
+        />
+
         {/* Overlay for better text readability - Figma-style frosted glass */}
         <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-white/3 to-slate-900/30 backdrop-blur-md" />
 
-        {/* Radial gradient overlay that blends edges to background color (slate-950: #020617) */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'radial-gradient(ellipse 100% 100% at center, transparent 0%, transparent 30%, rgba(2, 6, 23, 0.3) 60%, rgba(2, 6, 23, 0.7) 80%, rgb(2, 6, 23) 100%)'
-          }}
-        />
-
         {/* Content Container */}
-        <div className="relative z-10 flex flex-col h-full min-h-[85vh]">
+        <div className="relative z-10 flex flex-col h-full min-h-screen">
           {/* Navigation */}
           <nav className="flex items-center justify-between px-6 sm:px-10 lg:px-12 py-6 animate-slide-down">
             <div className="flex items-center gap-3">
@@ -102,9 +111,8 @@ export default function HeroSection() {
               </div>
             </div>
           </div>
-          
+
         </div>
-      </div>
     </div>
   )
 }
