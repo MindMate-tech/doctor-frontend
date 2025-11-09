@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import ReactMarkdown from 'react-markdown'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import usePatientStore from '@/store/patientStore'
@@ -13,6 +14,7 @@ type Message = {
   id: string
   role: 'user' | 'assistant' | 'system'
   text: string
+  toolsUsed?: string[]
 }
 
 type Patient = {
@@ -119,20 +121,103 @@ export default function ChatPage() {
     if (!input.trim()) return
     const userMsg: Message = { id: String(Date.now()), role: 'user', text: input }
     setMessages((m) => [...m, userMsg])
+    const queryText = input
     setInput('')
     setLoading(true)
 
-    // Simulate a response — this would be replaced by server/AI call
-    await new Promise((r) => setTimeout(r, 700))
-    const reply: Message = { id: String(Date.now() + 1), role: 'assistant', text: 'This is a demo response. In production, this would connect to an AI backend to analyze patient data and provide clinical insights.' }
-    setMessages((m) => [...m, reply])
-    setLoading(false)
+    try {
+      const response = await fetch(
+        'https://mindmate-cognitive-api.onrender.com/doctor/query',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query: queryText,
+            context: {
+              doctor_id: 'demo-doctor-001', // TODO: Replace with actual doctor ID from auth
+            },
+          }),
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`)
+      }
+
+      const data = await response.json()
+
+      const reply: Message = {
+        id: String(Date.now() + 1),
+        role: 'assistant',
+        text: data.response || 'No response received from the assistant.',
+        toolsUsed: data.tools_used,
+      }
+
+      setMessages((m) => [...m, reply])
+    } catch (error: any) {
+      console.error('Error querying doctor API:', error)
+      const errorMsg: Message = {
+        id: String(Date.now() + 1),
+        role: 'assistant',
+        text: `Error: ${error.message || 'Failed to connect to the assistant. Please try again.'}`,
+      }
+      setMessages((m) => [...m, errorMsg])
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const launchQuery = () => {
-    // placeholder for 'launching' a structured query into patient data
-    const sys: Message = { id: String(Date.now()), role: 'assistant', text: 'Analyzing patient cognitive metrics across all brain regions... (Demo mode - connect to backend for real analysis)' }
-    setMessages((m) => [...m, sys])
+  const launchQuery = async () => {
+    // Launch a predefined query to show at-risk patients
+    const queryText = 'Show me all at-risk patients with cognitive decline'
+    const userMsg: Message = { id: String(Date.now()), role: 'user', text: queryText }
+    setMessages((m) => [...m, userMsg])
+    setLoading(true)
+
+    try {
+      const response = await fetch(
+        'https://mindmate-cognitive-api.onrender.com/doctor/query',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query: queryText,
+            context: {
+              doctor_id: 'demo-doctor-001',
+            },
+          }),
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`)
+      }
+
+      const data = await response.json()
+
+      const reply: Message = {
+        id: String(Date.now() + 1),
+        role: 'assistant',
+        text: data.response || 'No response received from the assistant.',
+        toolsUsed: data.tools_used,
+      }
+
+      setMessages((m) => [...m, reply])
+    } catch (error: any) {
+      console.error('Error querying doctor API:', error)
+      const errorMsg: Message = {
+        id: String(Date.now() + 1),
+        role: 'assistant',
+        text: `Error: ${error.message || 'Failed to connect to the assistant. Please try again.'}`,
+      }
+      setMessages((m) => [...m, errorMsg])
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -195,7 +280,36 @@ export default function ChatPage() {
                           : 'bg-slate-800/80 text-slate-100 border border-slate-700/50'
                       }`}
                     >
-                      <div className="text-sm leading-relaxed">{m.text}</div>
+                      {m.role === 'assistant' ? (
+                        <div className="text-sm leading-relaxed">
+                          <ReactMarkdown
+                            components={{
+                              p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                              ul: ({ children }) => <ul className="list-disc pl-4 mb-2 space-y-1">{children}</ul>,
+                              ol: ({ children }) => <ol className="list-decimal pl-4 mb-2 space-y-1">{children}</ol>,
+                              li: ({ children }) => <li className="text-slate-200">{children}</li>,
+                              strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
+                              em: ({ children }) => <em className="italic">{children}</em>,
+                              code: ({ children }) => <code className="bg-slate-900/50 px-1.5 py-0.5 rounded text-blue-300 text-xs font-mono">{children}</code>,
+                              pre: ({ children }) => <pre className="bg-slate-900/50 p-3 rounded-lg mb-2 overflow-x-auto">{children}</pre>,
+                              h1: ({ children }) => <h1 className="text-lg font-bold mb-2 text-white">{children}</h1>,
+                              h2: ({ children }) => <h2 className="text-base font-bold mb-2 text-white">{children}</h2>,
+                              h3: ({ children }) => <h3 className="text-sm font-bold mb-1 text-white">{children}</h3>,
+                            }}
+                          >
+                            {m.text}
+                          </ReactMarkdown>
+                          {m.toolsUsed && m.toolsUsed.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-slate-600/50">
+                              <div className="text-xs text-slate-400">
+                                Tools used: {m.toolsUsed.join(', ')}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-sm leading-relaxed">{m.text}</div>
+                      )}
                     </div>
                   )
                 })}

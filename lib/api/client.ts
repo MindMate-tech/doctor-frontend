@@ -3,7 +3,10 @@
  * Handles all communication with the FastAPI backend
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// AI Analysis microservice (dedalus) - for cognitive analysis only
+const AI_API_URL = process.env.NEXT_PUBLIC_AI_API_URL || 'http://localhost:8000';
+// Next.js API routes - for patient CRUD operations
+const API_URL = '/api';
 const TIMEOUT_MS = 5000; // 5 second timeout
 
 // Backend response types (matching FastAPI schemas)
@@ -132,7 +135,7 @@ const api = {
    */
   async health(): Promise<HealthResponse> {
     try {
-      const response = await fetchWithTimeout(`${API_URL}/health`);
+      const response = await fetchWithTimeout(`${AI_API_URL}/health`);
       return handleResponse<HealthResponse>(response);
     } catch (error: any) {
       if (error instanceof ApiError) {
