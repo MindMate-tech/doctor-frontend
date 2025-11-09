@@ -9,6 +9,12 @@ const AI_API_URL = process.env.NEXT_PUBLIC_AI_API_URL || 'http://localhost:8000'
 const API_URL = '/api';
 const TIMEOUT_MS = 5000; // 5 second timeout
 
+// Debug logging for backend connection
+console.log('🔧 [API CLIENT] Initialization');
+console.log('   AI_API_URL:', AI_API_URL);
+console.log('   API_URL:', API_URL);
+console.log('   NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL || 'Not set');
+
 // Backend response types (matching FastAPI schemas)
 export interface BackendPatient {
   patient_id: string;
@@ -77,7 +83,7 @@ class ApiError extends Error {
   constructor(
     message: string,
     public status?: number,
-    public response?: any
+    public response?: unknown
   ) {
     super(message);
     this.name = 'ApiError';
@@ -99,9 +105,9 @@ async function fetchWithTimeout(
     });
     clearTimeout(timeoutId);
     return response;
-  } catch (error: any) {
+  } catch (error) {
     clearTimeout(timeoutId);
-    if (error.name === 'AbortError') {
+    if (error instanceof Error && error.name === 'AbortError') {
       throw new ApiError('Request timeout', 408);
     }
     throw error;
@@ -137,7 +143,7 @@ const api = {
     try {
       const response = await fetchWithTimeout(`${AI_API_URL}/health`);
       return handleResponse<HealthResponse>(response);
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof ApiError) {
         throw error;
       }
