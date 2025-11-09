@@ -39,11 +39,12 @@ export async function POST(request: Request) {
       .insert({
         patient_id: patientId,
         uploaded_by: finalDoctorId,
-        file_url: blobUrl,
-        file_name: filename,
-        file_size: fileSize,
-        status: 'uploaded',
-        metadata: {
+        storage_path: blobUrl,
+        original_filename: filename,
+        file_size_bytes: fileSize,
+        mime_type: 'application/x-gzip',
+        status: 'pending',
+        analysis: {
           uploadedAt: new Date().toISOString(),
           uploadMethod: 'client-direct',
         },
