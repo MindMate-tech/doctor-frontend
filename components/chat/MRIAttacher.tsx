@@ -107,49 +107,57 @@ export default function MRIAttacher({ patientId, disabledReason, patientAge, pat
       }, 1000)
 
       try {
-        console.log('[MRI_UPLOAD] 📦 Creating FormData object')
-        const form = new FormData()
+        console.log('[MRI_UPLOAD] 🌐 Using client-side direct upload to Vercel Blob')
+        console.log('[MRI_UPLOAD] � Preparing file for upload:', file.name)
 
-        console.log('[MRI_UPLOAD] 📎 Appending file to FormData')
-        form.append('file', file)
-        console.log('[MRI_UPLOAD] ✅ File appended:', file.name)
+        // Import the upload function dynamically
+        const { upload } = await import('@vercel/blob/client')
 
-        console.log('[MRI_UPLOAD] 📎 Appending patientId to FormData')
-        form.append('patientId', targetPatientId)
-        console.log('[MRI_UPLOAD] ✅ PatientId appended:', targetPatientId)
+        console.log('[MRI_UPLOAD] � Uploading directly to Vercel Blob...')
+        const uploadStartTime = Date.now()
 
-        console.log('[MRI_UPLOAD] 🌐 Initiating fetch to /api/mri/upload')
-        console.log('[MRI_UPLOAD] Request method: POST')
-        console.log('[MRI_UPLOAD] Request timestamp:', new Date().toISOString())
-
-        const response = await fetch('/api/mri/upload', {
-          method: 'POST',
-          body: form,
+        const blob = await upload(file.name, file, {
+          access: 'public',
+          handleUploadUrl: '/api/mri/upload-token',
         })
 
-        const fetchDuration = ((Date.now() - startTime) / 1000).toFixed(2)
-        console.log('[MRI_UPLOAD] 📨 Response received')
-        console.log('[MRI_UPLOAD] Response status:', response.status)
-        console.log('[MRI_UPLOAD] Response statusText:', response.statusText)
-        console.log('[MRI_UPLOAD] Response ok:', response.ok)
-        console.log('[MRI_UPLOAD] Response headers:', Object.fromEntries(response.headers.entries()))
-        console.log('[MRI_UPLOAD] Time to receive response:', fetchDuration, 's')
+        const uploadDuration = ((Date.now() - uploadStartTime) / 1000).toFixed(2)
+        console.log('[MRI_UPLOAD] ✅ Blob upload complete!')
+        console.log('[MRI_UPLOAD]   - duration:', uploadDuration, 's')
+        console.log('[MRI_UPLOAD]   - url:', blob.url)
+        console.log('[MRI_UPLOAD]   - size:', (file.size / (1024 * 1024)).toFixed(2), 'MB')
 
-        if (!response.ok) {
-          console.error('[MRI_UPLOAD] ❌ Response not OK')
-          console.error('[MRI_UPLOAD] Status code:', response.status)
+        console.log('[MRI_UPLOAD] 💾 Saving metadata to database...')
+        const metadataStartTime = Date.now()
 
-          const payload = await response.json().catch(() => {
-            console.error('[MRI_UPLOAD] ❌ Failed to parse error response as JSON')
-            return {}
-          })
+        const metadataResponse = await fetch('/api/mri/save-metadata', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            blobUrl: blob.url,
+            filename: file.name,
+            fileSize: file.size,
+            patientId: targetPatientId,
+          }),
+        })
 
+        const metadataDuration = ((Date.now() - metadataStartTime) / 1000).toFixed(2)
+        console.log('[MRI_UPLOAD] 📨 Metadata response received')
+        console.log('[MRI_UPLOAD] Response status:', metadataResponse.status)
+        console.log('[MRI_UPLOAD] Response ok:', metadataResponse.ok)
+        console.log('[MRI_UPLOAD] Time to save metadata:', metadataDuration, 's')
+
+        if (!metadataResponse.ok) {
+          console.error('[MRI_UPLOAD] ❌ Metadata save failed')
+          const payload = await metadataResponse.json().catch(() => ({}))
           console.error('[MRI_UPLOAD] Error payload:', payload)
-          throw new Error(payload?.message ?? 'Upload failed')
+          throw new Error(payload?.message ?? 'Failed to save MRI metadata')
         }
 
-        console.log('[MRI_UPLOAD] 📖 Parsing response JSON')
-        const result = await response.json()
+        console.log('[MRI_UPLOAD] 📖 Parsing metadata response')
+        const result = await metadataResponse.json()
 
         clearInterval(ticker)
         const totalDuration = ((Date.now() - startTime) / 1000).toFixed(2)
