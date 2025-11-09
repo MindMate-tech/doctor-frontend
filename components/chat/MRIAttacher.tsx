@@ -73,11 +73,21 @@ export default function MRIAttacher({ patientId, disabledReason }: MRIAttacherPr
           throw new Error(payload?.message ?? 'Upload failed')
         }
 
+        const result = await response.json()
+        console.log('[MRI_UPLOAD] Success:', result)
+        console.log('[MRI_UPLOAD] Scan ID:', result.scan?.id)
+        console.log('[MRI_UPLOAD] Status:', result.scan?.status)
+
         setUploads((prev) =>
-          prev.map((u) => (u.id === id ? { ...u, status: 'success', message: 'Uploaded' } : u)),
+          prev.map((u) => (u.id === id ? {
+            ...u,
+            status: 'success',
+            message: `Uploaded (ID: ${result.scan?.id?.slice(0, 8)}...)`
+          } : u)),
         )
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Upload failed'
+        console.error('[MRI_UPLOAD] Error:', err)
         setUploads((prev) =>
           prev.map((u) => (u.id === id ? { ...u, status: 'error', message } : u)),
         )
@@ -184,6 +194,7 @@ export default function MRIAttacher({ patientId, disabledReason }: MRIAttacherPr
 
       <input
         ref={fileInputRef}
+        title="Select MRI files"
         type="file"
         multiple
         accept=".dcm,.nii,.gz,.zip,application/dicom,application/x-gzip,application/gzip"

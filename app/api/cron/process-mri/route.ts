@@ -2,12 +2,13 @@ import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabaseServer'
 
 export const runtime = 'nodejs'
-export const maxDuration = 300 // 5 minutes (Vercel Pro+ required for >10s)
+export const maxDuration = 60 // 60 seconds max on Hobby plan
 
 /**
  * MRI Background Processor
  *
- * Triggered by Vercel Cron every 5 minutes (configured in vercel.json)
+ * Can be triggered manually via GET request or by external cron service (e.g., cron-job.org)
+ * For Vercel Cron, requires Pro+ plan and configuration in vercel.json
  *
  * Workflow:
  * 1. Fetch pending MRI scans from database
@@ -20,12 +21,13 @@ export async function GET(request: Request) {
   const startTime = Date.now()
 
   // ==========================================
-  // 1. AUTHENTICATION (verify cron secret)
+  // 1. AUTHENTICATION (optional - verify cron secret if set)
   // ==========================================
   const authHeader = request.headers.get('authorization')
-  const expectedAuth = `Bearer ${process.env.CRON_SECRET}`
+  const cronSecret = process.env.CRON_SECRET
 
-  if (authHeader !== expectedAuth) {
+  // Only check auth if CRON_SECRET is configured
+  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
     console.error('[MRI_PROCESSOR] Unauthorized cron request')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -94,7 +96,7 @@ export async function GET(request: Request) {
 
       // Calculate age from dob
       let age = 50 // Default
-      let sex = patient?.sex || patient?.gender || 'Male' // Use sex or gender field
+      const sex = patient?.sex || patient?.gender || 'Male' // Use sex or gender field
 
       if (patient?.dob) {
         const birthDate = new Date(patient.dob)

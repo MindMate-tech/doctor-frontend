@@ -185,7 +185,7 @@ const api = {
      */
     async getCognitiveData(patientId: string): Promise<BackendPatientData> {
       const response = await fetchWithTimeout(
-        `${API_URL}/patients/${patientId}/cognitive-data`
+        `${API_URL}/patients/${patientId}/analytics`
       );
       return handleResponse<BackendPatientData>(response);
     },
