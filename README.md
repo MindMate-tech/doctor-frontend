@@ -134,3 +134,39 @@ Potential features on the roadmap:
 - Advanced filtering and search capabilities
 - Integration with electronic health record (EHR) systems
 - Mobile native applications
+
+## MRI Upload MVP
+
+The chat page now supports attaching MRI studies so they can be routed through the backend agent pipeline. A few pieces of configuration are required before the feature will work end-to-end:
+
+1. **Supabase resources (configure via the Supabase dashboard):**
+   - Create a private storage bucket named `mri_images` (or set a different name in `MRI_STORAGE_BUCKET`).
+   - Add the `mri_scans` table:
+     ```sql
+     create table public.mri_scans (
+       scan_id uuid primary key default gen_random_uuid(),
+       patient_id uuid references public.patients(patient_id),
+       uploaded_by uuid references public.doctors(doctor_id),
+       storage_path text not null,
+       original_filename text not null,
+       status text not null default 'pending',
+       analysis jsonb,
+       created_at timestamptz not null default now()
+     );
+     ```
+   - (Optional) Seed a demo doctor row if you want `uploaded_by` to be non-null.
+
+2. **Environment variables (`.env.local`):**
+   ```bash
+   SUPABASE_URL=<your-supabase-project-url>
+   SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+   MRI_STORAGE_BUCKET=mri_images              # optional, defaults to mri_images
+   MRI_DEMO_DOCTOR_ID=<uuid-of-demo-doctor>   # optional, used until real auth is wired
+   ```
+
+3. **Manual steps the app cannot perform automatically:**
+   - Grant the service role key access to the storage bucket.
+   - Confirm your deployment platform (e.g., Vercel) also has the same environment variables.
+   - Wire the backend classifier/agent to poll `mri_scans` for rows where `status = 'pending'` and update them after processing.
+
+Once configured, the Clinical Assistant chat enforces a single active patient context (via the dashboard’s patient selector) before enabling uploads. Files are validated client-side (extension + 50 MB limit), streamed to `/api/mri/upload`, stored in Supabase, and a metadata row is appended to `mri_scans` so your backend agent can continue the workflow. Allowed formats include DICOM, NIfTI, JPG/PNG screenshots, and zipped DICOM studies.

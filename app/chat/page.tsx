@@ -4,6 +4,10 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import usePatientStore from '@/store/patientStore'
+import MRIAttacher from '@/components/chat/MRIAttacher'
+import PatientSearch from '@/components/dashboard/PatientSearch'
+import { createClient } from '@supabase/supabase-js'
 
 type Message = {
   id: string
@@ -11,13 +15,101 @@ type Message = {
   text: string
 }
 
+type Patient = {
+  id: string
+  name: string
+  dob?: string
+  gender?: string
+  createdAt: string
+}
+
 export default function ChatPage() {
+  const patient = usePatientStore((state) => state.patient)
+  const setPatient = usePatientStore((state) => state.setPatient)
   const [messages, setMessages] = useState<Message[]>([
     { id: 'm1', role: 'system', text: 'Clinical assistant ready. Ask me anything about patient data, cognitive metrics, or brain health analysis.' },
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [patients, setPatients] = useState<Patient[]>([])
+  const [loadingPatients, setLoadingPatients] = useState(true)
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const scrollerRef = useRef<HTMLDivElement | null>(null)
+
+  // Fetch patients from Supabase
+  useEffect(() => {
+    async function fetchPatients() {
+      try {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+
+        if (!supabaseUrl || !supabaseKey) {
+          console.error('Missing Supabase credentials')
+          setLoadingPatients(false)
+          return
+        }
+
+        const supabase = createClient(supabaseUrl, supabaseKey)
+
+        const { data, error } = await supabase
+          .from('patients')
+          .select('patient_id, name, dob, gender, created_at')
+          .order('created_at', { ascending: false })
+
+        if (error) {
+          console.error('Failed to fetch patients:', error)
+          return
+        }
+
+        const formattedPatients: Patient[] = (data || []).map((p) => ({
+          id: p.patient_id,
+          name: p.name,
+          dob: p.dob,
+          gender: p.gender,
+          createdAt: p.created_at,
+        }))
+
+        setPatients(formattedPatients)
+      } catch (err) {
+        console.error('Error fetching patients:', err)
+      } finally {
+        setLoadingPatients(false)
+      }
+    }
+
+    fetchPatients()
+  }, [])
+
+  const handleSelectPatient = (patientId: string) => {
+    setSelectedPatientId(patientId)
+    const selected = patients.find((p) => p.id === patientId)
+    if (selected) {
+      // Update Zustand store with selected patient
+      setPatient({
+        patientId: selected.id,
+        patientName: selected.name,
+        lastUpdated: new Date().toISOString(),
+        brainRegions: {
+          hippocampus: 0,
+          prefrontalCortex: 0,
+          brainStem: 0,
+          parietalLobe: 0,
+          amygdala: 0,
+          cerebellum: 0,
+        },
+        memoryMetrics: {
+          shortTermRecall: [],
+          longTermRecall: [],
+          semanticMemory: [],
+          episodicMemory: [],
+          workingMemory: [],
+        },
+        recentSessions: [],
+        overallCognitiveScore: 0,
+        memoryRetentionRate: 0,
+      })
+    }
+  }
 
   useEffect(() => {
     scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: 'smooth' })
@@ -54,6 +146,26 @@ export default function ChatPage() {
             ← Back to Dashboard
           </Link>
           <h1 className="text-2xl font-bold text-white">Clinical Assistant</h1>
+        </div>
+
+        {/* Patient Selection */}
+        <div className="mb-6">
+          <Card className="bg-slate-900/50 border-slate-800">
+            <CardHeader>
+              <CardTitle className="text-lg text-white">Select Patient</CardTitle>
+              <CardDescription className="text-slate-400">
+                Choose a patient to start uploading MRIs and analyzing data
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PatientSearch
+                patients={patients}
+                selectedPatientId={selectedPatientId}
+                onSelectPatient={handleSelectPatient}
+                isLoading={loadingPatients}
+              />
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -99,28 +211,36 @@ export default function ChatPage() {
               </div>
             </CardContent>
 
-            <CardFooter className="gap-2 border-t border-slate-800 bg-slate-900/30">
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && send()}
-                className="flex-1 rounded-lg px-4 py-2.5 bg-slate-800 border border-slate-700 text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Ask about this patient's data..."
-                aria-label="Chat input"
-                disabled={loading}
+            <CardFooter className="flex flex-col gap-3 border-t border-slate-800 bg-slate-900/30">
+              <MRIAttacher
+                patientId={selectedPatientId}
+                disabledReason={!selectedPatientId ? "Select a patient above to upload MRI files" : undefined}
               />
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={launchQuery}
-                disabled={loading}
-                className="hidden sm:flex"
-              >
-                Launch Query
-              </Button>
-              <Button onClick={send} disabled={loading || !input.trim()} size="sm">
-                {loading ? 'Sending...' : 'Send'}
-              </Button>
+              <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && send()}
+                  className="flex-1 rounded-lg px-4 py-2.5 bg-slate-800 border border-slate-700 text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="Ask about this patient's data..."
+                  aria-label="Chat input"
+                  disabled={loading}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={launchQuery}
+                    disabled={loading}
+                    className="hidden sm:flex"
+                  >
+                    Launch Query
+                  </Button>
+                  <Button onClick={send} disabled={loading || !input.trim()} size="sm">
+                    {loading ? 'Sending...' : 'Send'}
+                  </Button>
+                </div>
+              </div>
             </CardFooter>
           </Card>
 
@@ -133,17 +253,23 @@ export default function ChatPage() {
               <div className="space-y-4 text-sm">
                 <div>
                   <div className="text-xs text-slate-500 mb-1 font-medium uppercase tracking-wide">Name</div>
-                  <div className="text-slate-200">John Doe</div>
+                  <div className="text-slate-200">
+                    {patient?.patientName ?? 'No patient selected'}
+                  </div>
                 </div>
 
                 <div>
-                  <div className="text-xs text-slate-500 mb-1 font-medium uppercase tracking-wide">DOB</div>
-                  <div className="text-slate-200">1975-04-12</div>
+                  <div className="text-xs text-slate-500 mb-1 font-medium uppercase tracking-wide">Patient ID</div>
+                  <div className="text-slate-200 text-xs font-mono">
+                    {patient?.patientId ?? '—'}
+                  </div>
                 </div>
 
                 <div>
-                  <div className="text-xs text-slate-500 mb-1 font-medium uppercase tracking-wide">Last Scan</div>
-                  <div className="text-slate-200">2025-10-29 — MRI</div>
+                  <div className="text-xs text-slate-500 mb-1 font-medium uppercase tracking-wide">Last Update</div>
+                  <div className="text-slate-200">
+                    {patient ? new Date(patient.lastUpdated).toLocaleString() : '—'}
+                  </div>
                 </div>
 
                 <div className="pt-4 border-t border-slate-800">
@@ -167,7 +293,9 @@ export default function ChatPage() {
                 <div className="pt-4 border-t border-slate-800">
                   <div className="text-xs text-slate-500 mb-1 font-medium uppercase tracking-wide">Notes</div>
                   <div className="text-xs text-slate-400 leading-relaxed">
-                    This panel displays current patient context. Connect to backend to show real-time vitals and metrics.
+                    {patient
+                      ? 'MRI uploads and agent responses will stay scoped to this patient.'
+                      : 'Select a patient from the dropdown above to start uploading MRI files and analyzing data.'}
                   </div>
                 </div>
               </div>

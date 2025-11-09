@@ -1,7 +1,7 @@
 'use client'
 
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, Environment } from '@react-three/drei';
+import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import { GeneratedPointCloudBrain } from './GeneratedPointCloudBrain';
 import type { BrainRegionScores } from '@/types/patient';
 import { scoreToColor } from './colorUtils';
@@ -38,9 +38,6 @@ export function PointCloudCanvas({ regionScores, pointDensity = 5000 }: PointClo
         <pointLight position={[10, 10, 10]} intensity={0.5} color="#4488ff" />
         <pointLight position={[-10, -10, -10]} intensity={0.3} color="#ff4488" />
         <pointLight position={[0, 10, 0]} intensity={0.4} color="#44ff88" />
-
-        {/* Dark environment for contrast */}
-        <Environment preset="night" />
 
         {/* The point cloud brain */}
         <GeneratedPointCloudBrain
