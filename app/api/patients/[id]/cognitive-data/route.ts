@@ -3,11 +3,11 @@ import { getSupabaseAdmin } from '@/lib/supabaseServer';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await getSupabaseAdmin();
-    const { id } = params;
+    const { id } = await params;
 
     // Fetch patient info
     const { data: patient, error: patientError } = await supabase
@@ -91,10 +91,11 @@ export async function GET(
     };
 
     return NextResponse.json(cognitiveData);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching cognitive data:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Internal server error', detail: error.message },
+      { error: 'Internal server error', detail: errorMessage },
       { status: 500 }
     );
   }
