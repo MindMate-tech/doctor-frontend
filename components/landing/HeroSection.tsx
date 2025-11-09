@@ -63,13 +63,7 @@ export default function HeroSection() {
           {/* Navigation */}
           <nav className="flex items-center justify-between px-6 sm:px-10 lg:px-12 py-6 animate-slide-down">
             <div className="flex items-center gap-3">
-              <Image
-                src="/logo-mindmate.png"
-                alt="MindMate Logo"
-                width={120}
-                height={40}
-                className="h-10 w-auto"
-              />
+
             </div>
 
 
