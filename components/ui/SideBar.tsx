@@ -93,7 +93,7 @@ export default function SideBar({ open, onClose }: SideBarProps) {
       role="dialog"
       aria-modal="true"
       aria-hidden={open ? 'false' : 'true'}
-      className={`fixed inset-0 z-50 ${open ? 'pointer-events-auto' : 'pointer-events-none'}`}
+      className={`fixed inset-0 z-[120] ${open ? 'pointer-events-auto' : 'pointer-events-none'}`}
     >
       {/* backdrop */}
       <div
