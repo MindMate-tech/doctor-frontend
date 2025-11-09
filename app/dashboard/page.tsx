@@ -86,13 +86,15 @@ export default function Home() {
   useEffect(() => {
     if (!isBackendConnected || !selectedPatientId) return;
 
+    const patientId = selectedPatientId;
+
     let mounted = true;
 
     async function fetchPatientData() {
       try {
         setIsLoading(true);
         setError(null);
-        const cognitiveData = await api.patients.getCognitiveData(selectedPatientId);
+        const cognitiveData = await api.patients.getCognitiveData(patientId);
         if (!mounted) return;
 
         const transformedData = transformPatientData(cognitiveData);
