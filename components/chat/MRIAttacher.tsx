@@ -496,16 +496,6 @@ export default function MRIAttacher({ patientId, disabledReason, patientAge, pat
                   <X className="h-3.5 w-3.5" />
                 </Button>
               </div>
-
-              {/* Display prediction results */}
-              {upload.status === 'success' && upload.prediction !== undefined && (
-                <div className="mt-2 p-3 rounded-md bg-slate-800/50 border border-slate-700">
-                  <div className="text-xs font-medium text-slate-300 mb-2">MRI Analysis Results:</div>
-                  <pre className="text-xs text-slate-400 overflow-x-auto whitespace-pre-wrap">
-                    {JSON.stringify(upload.prediction, null, 2)}
-                  </pre>
-                </div>
-              )}
             </div>
           ))}
         </div>
