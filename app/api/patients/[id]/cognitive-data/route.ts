@@ -68,9 +68,9 @@ export async function GET(
     })) || [];
 
     // Calculate overall cognitive score from brain regions
-    const regionScores = Object.values(brainRegions);
+    const regionScores = Object.values(brainRegions) as number[];
     const overallCognitiveScore =
-      regionScores.reduce((sum: number, score: number) => sum + score, 0) / regionScores.length;
+      regionScores.reduce((sum, score) => sum + score, 0) / regionScores.length;
 
     // Return structured cognitive data
     const cognitiveData = {
